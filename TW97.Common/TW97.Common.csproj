@@ -1,0 +1,41 @@
+﻿<!--EXTERNAL_PROPERTIES: TargetFramework-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- 框架相关配置 -->
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.1;net5.0;net6.0;</TargetFrameworks>
+		<ImplicitUsings Condition="'$(TargetFramework)' == 'net6.0'">enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<!-- 打包相关配置 -->
+	<PropertyGroup>
+		<authors>twyyy</authors>
+		<Description>暂无</Description>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/twyyy/tw97-common</RepositoryUrl>
+		<Version>1.0.2</Version>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+	</PropertyGroup>
+
+	<!-- README.md / LICENSE -->
+	<ItemGroup>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+	
+	<!-- 引用 -->
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
+	</ItemGroup>
+
+</Project>
