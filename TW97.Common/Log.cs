@@ -1,7 +1,8 @@
 ﻿using System;
 using System.IO;
-using System.Threading.Tasks;
 using System.Text;
+using Microsoft.Extensions.Configuration;
+using TW97.Common.Models;
 
 namespace TW97.Common
 {
@@ -11,9 +12,9 @@ namespace TW97.Common
     public class Log
     {
         /// <summary>
-        /// 日志文件存放路径
+        /// 日志配置
         /// </summary>
-        private const string Path = "TW-Logs";
+        private static LogSettings _settings = new LogSettings();
 
         /// <summary>
         /// 日志锁
@@ -26,29 +27,43 @@ namespace TW97.Common
         private static readonly object ErrorLocker = new object();
 
         /// <summary>
+        /// 构造
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public Log(IConfiguration configuration)
+        {
+            if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+            if (_settings.Singleton)
+            {
+                return;
+            }
+
+            _settings = GetSettings(configuration);
+            _settings.Singleton = true;
+        }
+
+        /// <summary>
         /// 记录日志
         /// </summary>
         /// <param name="content"></param>
         /// <returns></returns>
-        public static Task InfoAsync(string content)
+        public static void InfoAsync(string content)
         {
-            return Task.Run(() =>
+            var dir = AppContext.BaseDirectory + _settings.Path;
+            var filePath = dir + $"\\info-{DateTime.Now:yyyyMMdd}.txt";
+
+            lock (InfoLocker)
             {
-                var dir = AppContext.BaseDirectory + Path + "\\Info";
-                var filePath = dir + $"\\{DateTime.Now:yyyyMMdd}.txt";
+                Directory.CreateDirectory(dir);
+                using var fs = new FileStream(filePath, FileMode.Append);
 
-                lock (InfoLocker)
-                {
-                    Directory.CreateDirectory(dir);
-                    using var fs = new FileStream(filePath, FileMode.Append);
+                content = $"{DateTime.Now:HH:mm:ss}\r\n\t{content}\r\n";
+                var byteCount = Encoding.UTF8.GetByteCount(content);
+                var buffer = Encoding.UTF8.GetBytes(content, 0, byteCount);
 
-                    content = $"{DateTime.Now:HH:mm:ss} INFO {content}\r\n";
-                    var byteCount = Encoding.UTF8.GetByteCount(content);
-                    var buffer = Encoding.UTF8.GetBytes(content, 0, byteCount);
-
-                    fs.Write(buffer);
-                }
-            });
+                fs.Write(buffer);
+            }
         }
 
         /// <summary>
@@ -56,25 +71,22 @@ namespace TW97.Common
         /// </summary>
         /// <param name="content"></param>
         /// <returns></returns>
-        public static Task ErrorAsync(string content)
+        public static void ErrorAsync(string content)
         {
-            return Task.Run(() =>
+            var dir = AppContext.BaseDirectory + _settings.Path;
+            var filePath = dir + $"\\error-{DateTime.Now:yyyyMMdd}.txt";
+
+            lock (ErrorLocker)
             {
-                var dir = AppContext.BaseDirectory + Path + "\\Error";
-                var filePath = dir + $"\\{DateTime.Now:yyyyMMdd}.txt";
+                Directory.CreateDirectory(dir);
+                using var fs = new FileStream(filePath, FileMode.Append);
 
-                lock (ErrorLocker)
-                {
-                    Directory.CreateDirectory(dir);
-                    using var fs = new FileStream(filePath, FileMode.Append);
+                content = $"{DateTime.Now:HH:mm:ss}\r\n\t{content}\r\n";
+                var byteCount = Encoding.UTF8.GetByteCount(content);
+                var buffer = Encoding.UTF8.GetBytes(content, 0, byteCount);
 
-                    content = $"{DateTime.Now:HH:mm:ss} Error {content}\r\n";
-                    var byteCount = Encoding.UTF8.GetByteCount(content);
-                    var buffer = Encoding.UTF8.GetBytes(content, 0, byteCount);
-
-                    fs.Write(buffer);
-                }
-            });
+                fs.Write(buffer);
+            }
         }
 
         /// <summary>
@@ -82,25 +94,46 @@ namespace TW97.Common
         /// </summary>
         /// <param name="exception"></param>
         /// <returns></returns>
-        public static Task ErrorAsync(Exception exception)
+        public static void ErrorAsync(Exception exception)
         {
-            return Task.Run(() =>
+            var dir = AppContext.BaseDirectory + _settings;
+            var filePath = dir + $"\\error-{DateTime.Now:yyyyMMdd}.txt";
+
+            lock (ErrorLocker)
             {
-                var dir = AppContext.BaseDirectory + Path + "\\Error";
-                var filePath = dir + $"\\{DateTime.Now:yyyyMMdd}.txt";
+                Directory.CreateDirectory(dir);
+                using var fs = new FileStream(filePath, FileMode.Append);
 
-                lock (ErrorLocker)
+                var content = $"{DateTime.Now:HH:mm:ss}\r\n\t{exception.Message}\r\n\t{exception.StackTrace}\r\n";
+                var byteCount = Encoding.UTF8.GetByteCount(content);
+                var buffer = Encoding.UTF8.GetBytes(content, 0, byteCount);
+
+                fs.Write(buffer);
+            }
+        }
+
+        /// <summary>
+        /// 获取日志配置
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
+        private static LogSettings GetSettings(IConfiguration configuration)
+        {
+            try
+            {
+                var settings = configuration.GetSection($"{Settings.Section}:{Settings.LogSection}").Get<LogSettings>();
+                if (string.IsNullOrEmpty(settings.Path))
                 {
-                    Directory.CreateDirectory(dir);
-                    using var fs = new FileStream(filePath, FileMode.Append);
-
-                    var content = $"{DateTime.Now:HH:mm:ss} Error {exception.Message} {exception.StackTrace}\r\n";
-                    var byteCount = Encoding.UTF8.GetByteCount(content);
-                    var buffer = Encoding.UTF8.GetBytes(content, 0, byteCount);
-
-                    fs.Write(buffer);
+                    settings.Path = "logs";
                 }
-            });
+
+                return settings;
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+                return new LogSettings();
+            }
         }
     }
 }

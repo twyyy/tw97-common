@@ -15,7 +15,7 @@
 		<Description>暂无</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/twyyy/tw97-common</RepositoryUrl>
-		<Version>1.0.2</Version>
+		<Version>1.0.3</Version>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 	</PropertyGroup>

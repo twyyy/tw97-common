@@ -25,7 +25,7 @@ namespace TW97.Common
                 return;
             }
 
-            _config = config ?? throw new ArgumentNullException(nameof(config), "空指针异常");
+            _config = config ?? throw new ArgumentNullException(nameof(config));
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace TW97.Common
         /// <exception cref="ArgumentNullException"></exception>
         public static T Get<T>(string key)
         {
-            if (_config == null) throw new ArgumentNullException(nameof(_config), "空指针异常");
+            if (_config == null) throw new ArgumentNullException(nameof(_config));
             return _config.GetSection(key).Get<T>();
         }
     }
